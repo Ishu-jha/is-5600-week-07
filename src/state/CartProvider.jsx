@@ -4,55 +4,70 @@ const CartContext = React.createContext();
 
 const initialState = {
   itemsById: {},
-  allItems: []
+  allItems: [],
 };
 
 const ADD_ITEM = 'ADD_ITEM';
 const REMOVE_ITEM = 'REMOVE_ITEM';
 const UPDATE_ITEM_QUANTITY = 'UPDATE_ITEM_QUANTITY';
 
+const getProductId = (product) => product._id || product.id;
+
 const cartReducer = (state, action) => {
   const { payload } = action;
 
   switch (action.type) {
-    case ADD_ITEM:
+    case ADD_ITEM: {
+      const productId = getProductId(payload);
+
       return {
         ...state,
         itemsById: {
           ...state.itemsById,
-          [payload._id]: {
+          [productId]: {
             ...payload,
-            quantity: state.itemsById[payload._id]
-              ? state.itemsById[payload._id].quantity + 1
-              : 1
-          }
+            quantity: state.itemsById[productId]
+              ? state.itemsById[productId].quantity + 1
+              : 1,
+          },
         },
-        allItems: Array.from(new Set([...state.allItems, payload._id]))
+        allItems: Array.from(new Set([...state.allItems, productId])),
       };
+    }
 
-    case REMOVE_ITEM:
+    case REMOVE_ITEM: {
+      const productId = getProductId(payload);
+
       return {
         ...state,
         itemsById: Object.entries(state.itemsById)
-          .filter(([key]) => key !== payload._id)
+          .filter(([key]) => key !== productId)
           .reduce((obj, [key, value]) => {
             obj[key] = value;
             return obj;
           }, {}),
-        allItems: state.allItems.filter((itemId) => itemId !== payload._id)
+        allItems: state.allItems.filter((itemId) => itemId !== productId),
       };
+    }
 
-    case UPDATE_ITEM_QUANTITY:
-      if (payload.quantity <= 0) {
+    case UPDATE_ITEM_QUANTITY: {
+      const { productId, quantity } = payload;
+      const item = state.itemsById[productId];
+
+      if (!item) return state;
+
+      const newQuantity = item.quantity + quantity;
+
+      if (newQuantity <= 0) {
         return {
           ...state,
           itemsById: Object.entries(state.itemsById)
-            .filter(([key]) => key !== payload.productId)
+            .filter(([key]) => key !== productId)
             .reduce((obj, [key, value]) => {
               obj[key] = value;
               return obj;
             }, {}),
-          allItems: state.allItems.filter((itemId) => itemId !== payload.productId)
+          allItems: state.allItems.filter((itemId) => itemId !== productId),
         };
       }
 
@@ -60,12 +75,13 @@ const cartReducer = (state, action) => {
         ...state,
         itemsById: {
           ...state.itemsById,
-          [payload.productId]: {
-            ...state.itemsById[payload.productId],
-            quantity: payload.quantity
-          }
-        }
+          [productId]: {
+            ...item,
+            quantity: newQuantity,
+          },
+        },
       };
+    }
 
     default:
       return state;
@@ -86,17 +102,19 @@ const CartProvider = ({ children }) => {
   const updateItemQuantity = (productId, quantity) => {
     dispatch({
       type: UPDATE_ITEM_QUANTITY,
-      payload: { productId, quantity }
+      payload: { productId, quantity },
     });
   };
 
   const getCartItems = () => {
-    return state.allItems.map((itemId) => state.itemsById[itemId]) ?? [];
+    return state.allItems.map((itemId) => state.itemsById[itemId]);
   };
 
   const getCartTotal = () => {
     return getCartItems().reduce((total, item) => {
-      return total + item.price * item.quantity;
+      const price = Number(item.price) || 0;
+      const quantity = Number(item.quantity) || 0;
+      return total + price * quantity;
     }, 0);
   };
 
@@ -107,7 +125,7 @@ const CartProvider = ({ children }) => {
         addToCart,
         updateItemQuantity,
         removeFromCart,
-        getCartTotal
+        getCartTotal,
       }}
     >
       {children}

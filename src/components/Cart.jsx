@@ -7,7 +7,7 @@ const Cart = () => {
     cartItems,
     removeFromCart,
     updateItemQuantity,
-    getCartTotal
+    getCartTotal,
   } = useCart();
 
   return (
@@ -31,17 +31,18 @@ const Cart = () => {
 
               <tbody>
                 {cartItems.map((item) => {
+                  const productId = item._id || item.id;
                   const title = item.description ?? item.alt_description;
-                  const itemPrice = item.price ?? 0;
+                  const itemPrice = Number(item.price) || 0;
 
                   return (
-                    <tr key={item._id || item.id}>
+                    <tr key={productId}>
                       <td className="tl pv2">{title}</td>
 
                       <td className="tr pv2">
                         <button
                           className="pointer ba b--black-10 pv1 ph2 mr2"
-                          onClick={() => updateItemQuantity(item._id || item.id, -1)}
+                          onClick={() => updateItemQuantity(productId, -1)}
                         >
                           -
                         </button>
@@ -50,7 +51,7 @@ const Cart = () => {
 
                         <button
                           className="pointer ba b--black-10 pv1 ph2 ml2"
-                          onClick={() => updateItemQuantity(item._id || item.id, 1)}
+                          onClick={() => updateItemQuantity(productId, 1)}
                         >
                           +
                         </button>
