@@ -1,35 +1,93 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import PurchaseForm from './PurchaseForm';
+import { useCart } from '../state/CartProvider';
 
-const Card = (props) => {
-  const { description, alt_description, _id, user, urls, likes } = props;
-
-  const title = description ?? alt_description;
+const Cart = () => {
+  const {
+    cartItems,
+    removeFromCart,
+    updateItemQuantity,
+    getCartTotal
+  } = useCart();
 
   return (
-    <article className="fl w-100 w-50-m w-25-ns pa2">
-      <Link to={`/product/${_id}`} className="db link dim tc">
-        
-        <div
-          className="aspect-ratio aspect-ratio--1x1"
-          style={{
-            backgroundImage: `url(${urls?.regular})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
+    <div className="center mw7 mv4">
+      <div className="bg-white pa3 mb3">
+        <h2 className="f2 mb2">Cart</h2>
 
-        <div className="pa2">
-          <h3 className="f6 mb1 black">{title}</h3>
-          <p className="f7 gray ma0">
-            {user?.first_name} {user?.last_name}
-          </p>
-          <p className="f7 gray ma0">{likes} Likes</p>
+        {cartItems.length === 0 ? (
+          <p>Your cart is empty.</p>
+        ) : (
+          <>
+            <table className="w-100 ba pa2">
+              <thead>
+                <tr>
+                  <th className="tl pv2">Product</th>
+                  <th className="tr pv2">Quantity</th>
+                  <th className="tr pv2">Price</th>
+                  <th className="tr pv2">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {cartItems.map((item) => {
+                  const title = item.description ?? item.alt_description;
+                  const itemPrice = item.price ?? 0;
+
+                  return (
+                    <tr key={item._id || item.id}>
+                      <td className="tl pv2">{title}</td>
+
+                      <td className="tr pv2">
+                        <button
+                          className="pointer ba b--black-10 pv1 ph2 mr2"
+                          onClick={() => updateItemQuantity(item._id || item.id, -1)}
+                        >
+                          -
+                        </button>
+
+                        {item.quantity}
+
+                        <button
+                          className="pointer ba b--black-10 pv1 ph2 ml2"
+                          onClick={() => updateItemQuantity(item._id || item.id, 1)}
+                        >
+                          +
+                        </button>
+                      </td>
+
+                      <td className="tr pv2">
+                        ${(itemPrice * item.quantity).toFixed(2)}
+                      </td>
+
+                      <td className="tr pv2">
+                        <button
+                          className="pointer ba b--black-10 pv1 ph2"
+                          onClick={() => removeFromCart(item)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="tr f4 mv3">
+              Total: ${getCartTotal().toFixed(2)}
+            </div>
+          </>
+        )}
+      </div>
+
+      {cartItems.length > 0 && (
+        <div className="flex justify-end pa3 mb3">
+          <PurchaseForm />
         </div>
-
-      </Link>
-    </article>
+      )}
+    </div>
   );
 };
 
-export default Card;
+export default Cart;

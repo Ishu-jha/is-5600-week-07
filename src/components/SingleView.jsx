@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import AddToCart from './AddToCart';
-import { BASE_URL } from '../config';
 import '../App.css';
 
-export default function SingleView() {
+export default function SingleView({ data }) {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
 
-  useEffect(() => {
-    fetch(`${BASE_URL}/products/${id}`)
-      .then((res) => res.json())
-      .then((data) => setProduct(data));
-  }, [id]);
+  const product = data.find(
+    (product) => product.id === id || product._id === id
+  );
 
-  if (!product || product.error) {
-    return <div className="pa4">Loading product...</div>;
+  if (!product) {
+    return <div className="pa4">Product not found.</div>;
   }
 
   const { user, urls } = product;
